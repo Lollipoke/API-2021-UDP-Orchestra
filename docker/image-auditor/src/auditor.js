@@ -95,10 +95,10 @@ server.on('connect', function(msg, source) {
     if(time - v.last > INTERVAL_ACTIVE) {
       console.log("Remove musician: ", k);
       musicians.delete(k);
-    }
-  }
+    };
+  });
 
-  var msg = JSON.stringify(musicians)
+  var msg = JSON.stringify(musicians);
   socket.write(msg);
   socket.write("\n");
   socket.end();

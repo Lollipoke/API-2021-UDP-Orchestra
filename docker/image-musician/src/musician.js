@@ -78,7 +78,7 @@ function Musician(instrument) {
 	  	 * Finally, let's encapsulate the payload in a UDP datagram, which we publish on
 	  	 * the multicast address. All subscribers to this address will receive the message.
 	  	 */
-		s.send(payload, PROTOCOL_PORT, PROTOCOL_MULTICAST_ADDRESS, function(err, bytes) {
+		s.send(payload, 0, payload.length, PROTOCOL_PORT, PROTOCOL_MULTICAST_ADDRESS, function(err, bytes) {
 			console.log("Sending payload: " + payload + " via port " + s.address().port);
 		});
 
