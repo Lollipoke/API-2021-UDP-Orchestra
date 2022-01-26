@@ -13,7 +13,7 @@
 /*
  * We define the multicast address and port
  */
-const UDP_PROTOCOL_MULTICAST_ADDRESS = "239.0.0.1";
+const UDP_PROTOCOL_MULTICAST_ADDRESS = "239.0.0.3";
 const UDP_PROTOCOL_PORT = 9907;
 const TCP_PROTOCOL_PORT = 2205;
 

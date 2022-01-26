@@ -16,7 +16,7 @@
 /*
  * We define the multicast address and port
  */
-const PROTOCOL_MULTICAST_ADDRESS = "239.0.0.1";
+const PROTOCOL_MULTICAST_ADDRESS = "239.0.0.3";
 const PROTOCOL_PORT = 9907;
 
 /*
@@ -32,13 +32,13 @@ var dgram = require('dgram');
 /*
  * Let's create a datagram socket. We will use it to send our UDP datagrams 
  */
-var s = dgram.createSocket('udp4');
+let srv = dgram.createSocket('udp4');
 
 /*
  * To define uuid for the musician
  */
-const RFC4122 = require('rfc4122');
-const uuid = new RFC4122().v4f();
+const { v4: uuidv4 } = require('uuid');
+const uuid = uuidv4();
 
 /*
  * List of instruments
@@ -54,15 +54,15 @@ instruments_map.set("drum", "boum-boum");
  * Let's define a javascript class for our musician. The constructor accepts
  * an instrument
  */
-function Musician(instrument) {
+function musician(instrument) {
 
-	this.instrument = instrument;
+	ins = instrument;
 
   	/*
   	 * We will simulate sound playing on a regular basis. That is something that
   	 * we implement in a class method (via the prototype)
   	 */
-	Musician.prototype.update = function() {
+
 		/*
 		 * Let's create the sound as a dynamic javascript object, 
 		 * add the 3 properties (timestamp, location and temperature)
@@ -70,7 +70,7 @@ function Musician(instrument) {
 		 */
 		var msg = {
 			uuid: uuid,
-			sound: instruments_map.get(instrument)
+			sound: instruments_map.get(ins)
 		};
 		var payload = JSON.stringify(msg);
 
@@ -78,24 +78,23 @@ function Musician(instrument) {
 	  	 * Finally, let's encapsulate the payload in a UDP datagram, which we publish on
 	  	 * the multicast address. All subscribers to this address will receive the message.
 	  	 */
-		s.send(payload, 0, payload.length,PROTOCOL_PORT, PROTOCOL_MULTICAST_ADDRESS, function(err, bytes) {
+		  /*
+		s.send(payload,PROTOCOL_PORT, PROTOCOL_MULTICAST_ADDRESS, function(err, bytes) {
 			console.log("Sending payload: " + payload + " via port " + s.address().port);
 		});
+		*/
+		console.log("Je vais planter");
 
-	}
-
-	/*
-	 * Let's take and send a measure every seconds
-	 */
-	setInterval(this.update.bind(this), INTERVAL_DATAGRAMS);
+		srv.send(payload, PROTOCOL_PORT, PROTOCOL_MULTICAST_ADDRESS);
+		console.log("Sending payload: " + payload + " via port " + PROTOCOL_PORT);
 
 }
 
 /*
- * Let's get the thermometer properties from the command line attributes
+ * 
  * Some error handling wouln't hurt here...
  */
-if(process.argv.length != 2) {
+if(process.argv.length != 3) {
 	console.error("Missing argument");
 	process.exit();
 }
@@ -110,4 +109,7 @@ if(instruments_map.get(instrument) == undefined) {
  * Let's create a new Musician - the regular publication of sounds will
  * be initiated within the constructor
  */
-var t1 = new Musician(instrument);
+/*
+* Let's take and send a measure every seconds
+*/
+setInterval(musician, INTERVAL_DATAGRAMS, instrument);
