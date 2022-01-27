@@ -48,6 +48,7 @@ const dgram = require('dgram');
  * multicast group by musicians and containing ''sounds''
  */
 const s = dgram.createSocket('udp4');
+
 s.bind(UDP_PROTOCOL_PORT, function() {
   console.log("Joining multicast group");
   s.addMembership(UDP_PROTOCOL_MULTICAST_ADDRESS);
@@ -61,10 +62,12 @@ s.on('message', function(msg, source) {
   var parseMsg = JSON.parse(msg);
   var musician = musicians.get(parseMsg.uuid);
 
+  console.log("Sound heard : "+ parseMsg.sound);
+
   // If musician is not in the list, add it
   if (musician == undefined) {
     musicians.set(parseMsg.uuid, {instrument:instruments_map.get(parseMsg.sound), start:time, last:time});
-  } else if (now - musician.last < INTERVAL_ACTIVE) {
+  } else if (time - musician.last < INTERVAL_ACTIVE) {
     // Musician has been active within 5 seconds
     musicians.set(parseMsg.uuid, {instrument:musician.instrument, start:musician.start, last:time});
   }
@@ -74,20 +77,18 @@ s.on('message', function(msg, source) {
 /*
  * We use a standard Node.js module to work with TCP
  */
-const net = require('net');
+const tcp = require('net');
 
 /*
  * Create a TCP server that accepts connection on port 2205 and sends the list
  * of active musicians  
  */ 
-const server = net.createServer(function(socket) {
-  socket.write('Echo server\r\n');
-  socket.pipe(socket);
-});
+const server = tcp.createServer();
 
 server.listen(TCP_PROTOCOL_PORT);
 
-server.on('connect', function(msg, source) {
+server.on('connection', function(socket) {
+
   var time = Date.now();
 
   // Remove inactive musicians
@@ -98,8 +99,12 @@ server.on('connect', function(msg, source) {
     };
   });
 
-  var msg = JSON.stringify(musicians);
+  // array on valid musicians
+  let msg = JSON.stringify((Array.from(musicians)).map(([k,v]) => {
+		return {uuid:k, instrument:v.instrument , activeSince: new Date(v.firstPing) };	
+	}));
+
   socket.write(msg);
-  socket.write("\n");
+  socket.write("\r\n");
   socket.end();
 });
